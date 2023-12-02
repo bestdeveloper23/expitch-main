@@ -1,0 +1,16 @@
+name: Manual Push to Staging
+
+on:
+  workflow_dispatch:
+
+jobs:
+  force-push:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Force push
+        run: |
+          git checkout main
+          git push "https://${{ secrets.GH_PAT }}@github.com/expitch-org/expitch.git" main:staging --force

@@ -1,0 +1,124 @@
+name: Staging deploy
+
+concurrency:
+  group: staging
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - staging
+    paths-ignore:
+      - '**.md'
+
+jobs:
+  setup-node_modules:
+    name: Setup node_modules
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        node-version:
+          - 16.x
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: node_modules-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            node_modules-
+
+  checks:
+    name: Run checks
+    needs: [setup-node_modules]
+    runs-on: ubuntu-20.04
+    environment: staging
+    strategy:
+      matrix:
+        node-version:
+          - 16.x
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Load node_modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: node_modules-${{ hashFiles('**/package-lock.json') }}
+      - name: Install dependencies
+        run: npm install
+      - name: Run linting
+        run: npm run lint
+
+  staging-deploy:
+    name: Build and Deploy to staging
+    needs: [checks]
+    runs-on: ubuntu-20.04
+    environment: staging
+    strategy:
+      matrix:
+        node-version:
+          - 16.x
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Load node_modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: node_modules-${{ hashFiles('**/package-lock.json') }}
+      - name: Install dependencies
+        run: npm install
+      - name: Run build
+        run: npm run build
+      - name: Inject environment variables
+        env:
+          NODE_ENV: staging
+          PORT: 8080
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+          GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
+          GCS_CLIENT_EMAIL: ${{ secrets.GCS_CLIENT_EMAIL }}
+          GCS_PRIVATE_KEY: ${{ secrets.GCS_PRIVATE_KEY }}
+          BASE_URL: ${{ secrets.BASE_URL }}
+          RECAPTCHA_SECRET_KEY: ${{ secrets.RECAPTCHA_SECRET_KEY }}
+          STYTCH_PROJECT_ID: ${{ secrets.STYTCH_PROJECT_ID }}
+          STYTCH_SECRET: ${{ secrets.STYTCH_SECRET }}
+        run: npm run inject-env
+      - name: Authorize principal
+        uses: google-github-actions/auth@v0
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Deploy
+        uses: google-github-actions/deploy-appengine@v0
+        with:
+          deliverables: app.staging.yaml

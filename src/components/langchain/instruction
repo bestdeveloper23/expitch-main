@@ -1,0 +1,7 @@
+- max tokens on a pitch
+
+also how to test.
+
+1. create a pack of a few default 'models' and a few pitches
+
+- pitches should actually come back with the right settings. Im not sure why its not returning.

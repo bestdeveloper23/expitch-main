@@ -1,0 +1,12 @@
+runtime: nodejs16
+instance_class: F1
+service: api-staging
+env_variables:
+  NODE_ENV: $NODE_ENV
+  PORT: $PORT
+  OPENAI_API_KEY: $OPENAI_API_KEY
+  DB_USERNAME: $DB_USERNAME
+  DB_PASSWORD: $DB_PASSWORD
+  DB_HOST: $DB_HOST
+  DB_DATABASE: $DB_DATABASE
+  BASE_URL: $BASE_URL
