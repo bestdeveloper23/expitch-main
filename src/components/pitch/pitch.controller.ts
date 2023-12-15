@@ -40,7 +40,9 @@ import {
   createTextPitchResponse,
   UploadPitchAdminDtoNEW,
   UploadPitchDtoNEW,
+  PitchResponseDto,
 } from './dto/pitchResponse.dto';
+import { GetPitchListForEmail } from './dto/get-pitchlist.input';
 import { AuthService } from '../auth/auth.service';
 import { NewPitch, Pitch, PitchEvaluation } from './model/pitch.schema';
 
@@ -190,7 +192,11 @@ export class PitchController {
     // use whisper to transcribe the file
 
     const pitchText = await this.pitchService.transcribePitch(pitchFile);
-    const mappedPitchText = await this.pitchService.mapPitchTextToDto(pitchText, userId, CreateEvaluationInput.modelName);
+    const mappedPitchText = await this.pitchService.mapPitchTextToDto(
+      pitchText,
+      userId,
+      CreateEvaluationInput.modelName,
+    );
 
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Cache-Control', 'no-cache');
@@ -248,6 +254,7 @@ export class PitchController {
   ): Promise<NewPitch> {
     // file validation
     await this.authService.validateRecaptcha(transcribeAudioDto.recaptchaToken);
+
     if (!pitchFile) {
       throw new FileNotProvidedException();
     }
@@ -260,7 +267,6 @@ export class PitchController {
     // gets user id from email
 
     const userId = await this.pitchService.getUserId(transcribeAudioDto.email);
-
     // uploads file to cloud storage
 
     // const fileNameGCS = await this.pitchService.uploadFileToCloudStorage(
@@ -351,13 +357,14 @@ export class PitchController {
   @ApiResponse({ status: 400, description: 'Bad Request' })
   async uploadText(
     @Body(new ValidateDtoPipe()) evaluteLCPitchDto: EvaluateLCPitchDto,
-  ): Promise<createTextPitchResponse> { // Update the return type if necessary
+  ): Promise<createTextPitchResponse> {
+    // Update the return type if necessary
     await this.authService.validateRecaptcha(evaluteLCPitchDto.recaptchaToken);
 
     // This will now queue the task and return a message
     return await this.pitchService.evaluateLangechainPitch(evaluteLCPitchDto);
   }
-  
+
   @Post('/admin/getPitchEvalForText')
   @ApiBody({ type: EvaluateLCPitchAdminDto, description: 'Upload Pitch File' })
   @ApiOperation({ summary: 'Upload and evaluate a pitch text' })
@@ -386,7 +393,9 @@ export class PitchController {
   )
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: UploadPitchAdminDto, description: 'Upload Pitch File' })
-  @ApiOperation({ summary: 'Upload and evaluate a pitch audio file with NEW evaluation' })
+  @ApiOperation({
+    summary: 'Upload and evaluate a pitch audio file with NEW evaluation',
+  })
   @ApiResponse({
     status: 200,
     description: 'Successful upload and evaluation',
@@ -399,7 +408,11 @@ export class PitchController {
     @UploadedFile() pitchFile: Express.Multer.File,
   ): Promise<createTextPitchResponse> {
     const pitchText = await this.pitchService.transcribePitch(pitchFile);
-    const mapped = await this.pitchService.mapPitchTextToDto(pitchText, evaluteLCPitchDto.email, evaluteLCPitchDto.modelName)
+    const mapped = await this.pitchService.mapPitchTextToDto(
+      pitchText,
+      evaluteLCPitchDto.email,
+      evaluteLCPitchDto.modelName,
+    );
     return await this.pitchService.evaluateLangechainPitch(mapped);
   }
   @Post('/getPitchEvalForAudioNEW')
@@ -415,7 +428,9 @@ export class PitchController {
   )
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: UploadPitchDto, description: 'Upload Pitch File' })
-  @ApiOperation({ summary: 'Upload and evaluate a pitch audio file with NEW evaluation' })
+  @ApiOperation({
+    summary: 'Upload and evaluate a pitch audio file with NEW evaluation',
+  })
   @ApiResponse({
     status: 200,
     description: 'Successful upload and evaluation',
@@ -429,10 +444,29 @@ export class PitchController {
   ): Promise<createTextPitchResponse> {
     await this.authService.validateRecaptcha(evaluteLCPitchDto.recaptchaToken);
     const pitchText = await this.pitchService.transcribePitch(pitchFile);
-    const mapped = await this.pitchService.mapPitchTextToDto(pitchText, evaluteLCPitchDto.email, evaluteLCPitchDto.modelName)
+    const mapped = await this.pitchService.mapPitchTextToDto(
+      pitchText,
+      evaluteLCPitchDto.email,
+      evaluteLCPitchDto.modelName,
+    );
     return await this.pitchService.evaluateLangechainPitch(mapped);
   }
+
+  @Post('/getPitchlistforUser')
+  @ApiBody({ type: UploadPitchDto, description: 'Upload Pitch File' })
+  @ApiOperation({
+    summary: 'Upload and evaluate a pitch audio file with NEW evaluation',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Successful upload and evaluation',
+    type: [Pitch],
+  })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  // this function uploads a file to the server and then calls the pitchService to evaluate it.
+  async GetPitchList(
+    @Body(new ValidateDtoPipe()) getPichInput: GetPitchListForEmail,
+  ): Promise<Pitch[]> {
+    return await this.pitchService.getPitchfromEmail(getPichInput.email);
+  }
 }
-
-
-

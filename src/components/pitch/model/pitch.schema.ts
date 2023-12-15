@@ -66,6 +66,12 @@ export class Pitch {
 
   @Prop({ type: String, required: true })
   fileName: string;
+
+  @Prop()
+  createdAt: Date;
+
+  @Prop()
+  updatedAt: Date;
 }
 
 export class newGeneralFactor {

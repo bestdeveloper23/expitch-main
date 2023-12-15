@@ -48,8 +48,6 @@ export class UploadPitchAdminDtoNEW {
 
   @ApiProperty({ description: 'Model name', example: 'main' })
   modelName: string;
-
-  
 }
 export class UploadPitchDtoNEW {
   @ApiProperty({
@@ -67,7 +65,6 @@ export class UploadPitchDtoNEW {
 
   @ApiProperty({ description: 'Recaptcha token' })
   recaptchaToken: string;
-  
 }
 export class UploadAdminAudioDto {
   @ApiProperty({
@@ -229,4 +226,82 @@ export class createTextPitchResponse {
     type: NewPitch,
   })
   pitch: NewPitch;
+}
+export class PitchResponseDto {
+  @ApiProperty({
+    description: 'Unique identifier for the evaluation.',
+    example: '64f243563ce32e29de9dcacb',
+  })
+  _id: string;
+
+  @ApiProperty({
+    description: 'Unique identifier for user.',
+    example: '64f243563ce32e29de9dcacb',
+  })
+  userId: string;
+
+  @ApiProperty({
+    description: 'Contents for the business.',
+    example: 'Pitch results for business',
+  })
+  pitchText: string;
+
+  @ApiProperty({
+    description: 'Evaluation details for feature benefits.',
+    type: EvaluationDetailsDto,
+  })
+  featureBenefits: EvaluationDetailsDto;
+
+  @ApiProperty({
+    description: 'Evaluation details for readiness.',
+    type: EvaluationDetailsDto,
+  })
+  readiness: EvaluationDetailsDto;
+
+  @ApiProperty({
+    description: 'Evaluation details for barrier to entry.',
+    type: EvaluationDetailsDto,
+  })
+  barrierToEntry: EvaluationDetailsDto;
+
+  @ApiProperty({
+    description: 'Evaluation details for adoption.',
+    type: EvaluationDetailsDto,
+  })
+  adoption: EvaluationDetailsDto;
+
+  @ApiProperty({
+    description: 'Evaluation details for supply chain.',
+    type: EvaluationDetailsDto,
+  })
+  supplyChain: EvaluationDetailsDto;
+
+  @ApiProperty({
+    description: 'Evaluation details for market size.',
+    type: EvaluationDetailsDto,
+  })
+  marketSize: EvaluationDetailsDto;
+
+  @ApiProperty({
+    description: 'Evaluation details for entrepreneur experience.',
+    type: EvaluationDetailsDto,
+  })
+  entrepreneurExperience: EvaluationDetailsDto;
+
+  @ApiProperty({
+    description: 'Evaluation details for financial expectations.',
+    type: EvaluationDetailsDto,
+  })
+  financialExpectations: EvaluationDetailsDto;
+
+  @ApiProperty({
+    description: 'Name of the uploaded file.',
+    example: 'doordash-1693598526533.mp3',
+  })
+  fileName: string;
+
+  @ApiProperty({
+    description: 'Craeted date of pitch.',
+  })
+  createdAt: Date;
 }

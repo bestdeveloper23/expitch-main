@@ -63,29 +63,27 @@ export class AuthService {
   }
 
   async loginOrCreateUserWithMagicLink(email: string) {
-
     const envUrl = process.env.NODE_ENV;
     let loginUrl: string;
     let signupUrl: string;
-      switch (envUrl) {
-        case 'development':
-          loginUrl = 'http://localhost:3000/verifyuser';
-          signupUrl = 'http://localhost:3000/verifyuser';
-          break;
-        case 'staging':
-          loginUrl = 'https://client-staging.expitch.com/verifyuser';
-          signupUrl = 'https://client-staging.expitch.com/verifyuser';
-          break;
-        case 'production':
-          loginUrl = 'https://www.expitch.com/verifyuser';
-          signupUrl = 'https://www.expitch.com/verifyuser';
-          break;
-        default:
-          loginUrl = 'http://localhost:3000';
-          signupUrl = 'http://localhost:3000';
-          break;
-  }
-
+    switch (envUrl) {
+      case 'development':
+        loginUrl = 'http://localhost:3000/verifyuser';
+        signupUrl = 'http://localhost:3000/verifyuser';
+        break;
+      case 'staging':
+        loginUrl = 'https://client-staging.expitch.com/verifyuser';
+        signupUrl = 'https://client-staging.expitch.com/verifyuser';
+        break;
+      case 'production':
+        loginUrl = 'https://www.expitch.com/verifyuser';
+        signupUrl = 'https://www.expitch.com/verifyuser';
+        break;
+      default:
+        loginUrl = 'http://localhost:3000';
+        signupUrl = 'http://localhost:3000';
+        break;
+    }
 
     const params = {
       email: email,
@@ -133,11 +131,10 @@ export class AuthService {
     }
   }
 
-  async authenticateSession(sessionJwt: string, sessionToken: string) {
+  async authenticateSession(sessionToken: string) {
     try {
       const response = await this.client.sessions.authenticate({
         session_token: sessionToken,
-        // session_jwt: sessionJwt,
         session_duration_minutes: this.sessionTime,
       });
       console.log('Session authenticated...');
@@ -147,11 +144,10 @@ export class AuthService {
     }
   }
 
-  async revokeSession(sessionJwt: string, sessionToken: string) {
+  async revokeSession(sessionToken: string) {
     try {
       const response = await this.client.sessions.revoke({
         session_token: sessionToken,
-        // session_jwt: sessionJwt,
       });
 
       console.log(response);
@@ -160,4 +156,5 @@ export class AuthService {
       throw new UserUnauthorizedError();
     }
   }
+
 }

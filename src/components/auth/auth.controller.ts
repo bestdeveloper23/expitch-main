@@ -48,9 +48,7 @@ export class AuthController {
     @Body(new ValidateDtoPipe()) input: VerifySessionInput,
     @Res() res: Response,
   ) {
-    
     const result = await this.authService.authenticateSession(
-      input.sessionJwt,
       input.sessionToken,
     );
 
@@ -66,10 +64,7 @@ export class AuthController {
   ) {
     console.log(input);
     await this.authService.validateRecaptcha(input.recaptchaToken);
-    const result = await this.authService.revokeSession(
-      input.sessionJwt,
-      input.sessionToken,
-    );
+    const result = await this.authService.revokeSession(input.sessionToken);
 
     res.status(200).send({
       message: 'Success',

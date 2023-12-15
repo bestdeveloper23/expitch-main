@@ -14,6 +14,7 @@ import { LangchainService } from '../langchain/langchain.service';
 import {
   EvaluateLCPitchAdminDto,
   EvaluateLCPitchDto,
+  PitchResponseDto,
 } from './dto/pitchResponse.dto';
 import { EvaluationService } from '../evaluation/evaluation.service';
 import { PitchEvaluation } from 'src/core/functions';
@@ -118,16 +119,40 @@ export class PitchService {
       fileName,
     });
   }
+
+  async getPitchfromEmail(email: string): Promise<Pitch[]> {
+    try {
+      const userId = await this.getUserId(email);
+
+      if (!userId) {
+        throw new Error('User ID not found');
+      }
+
+      const pitches = await this.serviceModel.find({ userId: userId }).exec();
+
+      if (pitches.length === 0) {
+        throw new Error('Pitches not found');
+      }
+
+      return pitches;
+    } catch (error) {
+      // Handle errors appropriately
+      console.error(error);
+      throw error;
+    }
+  }
+
   async uploadFileToCloudStorage(pitchFile: Express.Multer.File): Promise<any> {
     try {
-      const { name: fileNameGCS } = await this.cloudStorageService.uploadPitchFile(pitchFile);
+      const { name: fileNameGCS } =
+        await this.cloudStorageService.uploadPitchFile(pitchFile);
       return fileNameGCS;
     } catch (error) {
       console.error('Error uploading file to cloud storage:', error);
       throw new Error('Failed to upload file to cloud storage');
     }
   }
-  
+
   async transcribePitch(pitchFile: Express.Multer.File) {
     try {
       const pitchText = await this.openAiIntegrationService.transcribePitch(
@@ -135,23 +160,24 @@ export class PitchService {
       );
       return pitchText;
     } catch (error) {
-      console.error("An error occurred while transcribing the pitch:", error);
+      console.error('An error occurred while transcribing the pitch:', error);
       // Handle the error as you see fit. For example, you could throw it again,
       // return a default value, or return a custom error message.
-      throw new Error("Failed to transcribe the pitch");
+      throw new Error('Failed to transcribe the pitch');
     }
   }
-  
 
-
-async mapPitchTextToDto(pitchText: string, email: string, modelName: string): Promise<EvaluateLCPitchAdminDto> {
-  return {
-    email: email,
-    pitchText: pitchText,
-    modelName:modelName ,
-  } as EvaluateLCPitchAdminDto;
-
-}
+  async mapPitchTextToDto(
+    pitchText: string,
+    email: string,
+    modelName: string,
+  ): Promise<EvaluateLCPitchAdminDto> {
+    return {
+      email: email,
+      pitchText: pitchText,
+      modelName: modelName,
+    } as EvaluateLCPitchAdminDto;
+  }
 
   async EvaluatePitch(
     pitchText: string,
@@ -178,28 +204,31 @@ async mapPitchTextToDto(pitchText: string, email: string, modelName: string): Pr
     return String(createdUser._id);
   }
 
-  
   async evaluateLangechainPitch(
     evaluatePitchDto: EvaluateLCPitchDto | EvaluateLCPitchAdminDto,
   ): Promise<any> {
     try {
-      while(this.isProcessing) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+      while (this.isProcessing) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
-  
+
       this.isProcessing = true;
-  
+
       // Your existing logic here
-      const result = await this.actuallyEvaluateLangechainPitch(evaluatePitchDto);
+      const result = await this.actuallyEvaluateLangechainPitch(
+        evaluatePitchDto,
+      );
       return result;
     } catch (error) {
-      console.error("An error occurred while evaluating the Langechain pitch:", error);
-      throw new Error("Failed to evaluate the pitch"); // Or handle error differently
+      console.error(
+        'An error occurred while evaluating the Langechain pitch:',
+        error,
+      );
+      throw new Error('Failed to evaluate the pitch'); // Or handle error differently
     } finally {
       this.isProcessing = false;
     }
   }
-  
 
   async actuallyEvaluateLangechainPitch(
     evaluatePitchDto: EvaluateLCPitchDto | EvaluateLCPitchAdminDto,
@@ -228,7 +257,7 @@ async mapPitchTextToDto(pitchText: string, email: string, modelName: string): Pr
         evaluationConfig,
         pitchText,
       );
-      
+
     // now save it
     let pitch;
     try {
@@ -236,7 +265,9 @@ async mapPitchTextToDto(pitchText: string, email: string, modelName: string): Pr
         String(savedPitchModel._id),
         pitch_evaluation,
       );
-    } catch (error) { console.log(error);}
+    } catch (error) {
+      console.log(error);
+    }
     return { evaluation: pitch_evaluation, pitch };
   }
 }
