@@ -467,6 +467,8 @@ export class PitchController {
   async GetPitchList(
     @Body(new ValidateDtoPipe()) getPichInput: GetPitchListForEmail,
   ): Promise<Pitch[]> {
+    await this.authService.validateRecaptcha(getPichInput.recaptchaToken);
+
     return await this.pitchService.getPitchfromEmail(getPichInput.email);
   }
 }
