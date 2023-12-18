@@ -257,7 +257,8 @@ export class PitchService {
         evaluationConfig,
         pitchText,
       );
-
+    const pitchEvaluation = await this.EvaluatePitch(pitchText, modelName);
+    await this.savePitch(pitchText, pitchEvaluation, 'noFile', userId);
     // now save it
     let pitch;
     try {
