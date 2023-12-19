@@ -8,8 +8,8 @@ export interface EnvironmentVariables {
   PORT: number;
   BASE_URL: string;
   OPENAI_API_KEY: string;
-  DB_USERNAME: string;
-  DB_PASSWORD: string;
+  // DB_USERNAME: string;
+  // DB_PASSWORD: string;
   DB_HOST: string;
   DB_DATABASE: string;
   GCS_BUCKET: string;
@@ -29,8 +29,8 @@ export const environmentValidationSchema = Joi.object<EnvironmentVariables>({
   PORT: Joi.number().required(),
   BASE_URL: Joi.string().required(),
   OPENAI_API_KEY: Joi.string().required(),
-  DB_USERNAME: Joi.string().required(),
-  DB_PASSWORD: Joi.string().required(),
+  // DB_USERNAME: Joi.string().required(),
+  // DB_PASSWORD: Joi.string().required(),
   DB_HOST: Joi.string().required(),
   DB_DATABASE: Joi.string().required(),
   GCS_BUCKET: Joi.string().required(),

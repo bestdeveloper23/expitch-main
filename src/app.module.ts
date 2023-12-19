@@ -13,11 +13,11 @@ import { PitchModule } from './components/pitch/pitch.module';
 import { EvaluationModule } from './components/evaluation/evaluation.module';
 
 const getMongoUrl = (configService: ConfigServiceWithEnv) => {
-  const DB_USERNAME = configService.get('DB_USERNAME');
-  const DB_PASSWORD = configService.get('DB_PASSWORD');
+  // const DB_USERNAME = configService.get('DB_USERNAME');
+  // const DB_PASSWORD = configService.get('DB_PASSWORD');
   const DB_HOST = configService.get('DB_HOST');
   const DB_DATABASE = configService.get('DB_DATABASE');
-  return `mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}/${DB_DATABASE}?retryWrites=true&w=majority`;
+  return `mongodb://${DB_HOST}/${DB_DATABASE}?retryWrites=true&w=majority`;
 };
 
 @Module({

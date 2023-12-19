@@ -453,13 +453,13 @@ export class PitchController {
   }
 
   @Post('/getPitchlistforUser')
-  @ApiBody({ type: UploadPitchDto, description: 'Upload Pitch File' })
+  @ApiBody({ type: GetPitchListForEmail, description: 'Upload your email' })
   @ApiOperation({
-    summary: 'Upload and evaluate a pitch audio file with NEW evaluation',
+    summary: 'Upload and get pitches with your email',
   })
   @ApiResponse({
     status: 200,
-    description: 'Successful upload and evaluation',
+    description: 'Successful found',
     type: [Pitch],
   })
   @ApiResponse({ status: 400, description: 'Bad Request' })
