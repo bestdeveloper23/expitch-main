@@ -271,4 +271,26 @@ export class PitchService {
     }
     return { evaluation: pitch_evaluation, pitch };
   }
+
+  async updatePitchFileName(_id: string, fileName: string) {
+    try {
+      const pitch = await this.serviceModel.updateOne(
+        { _id: _id },
+        { $set: { fileName: fileName } },
+      );
+
+      if (pitch.matchedCount === 1) {
+        // Document was updated successfully
+        console.log('Pitch updated successfully');
+      } else {
+        // No document was modified, possibly because the document with the given _id was not found
+        console.log('No pitch document found with the given _id');
+      }
+
+      return pitch;
+    } catch (error) {
+      console.error('Error updating pitch:', error);
+      throw error;
+    }
+  }
 }

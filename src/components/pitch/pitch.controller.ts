@@ -45,6 +45,7 @@ import {
 import { GetPitchListForEmail } from './dto/get-pitchlist.input';
 import { AuthService } from '../auth/auth.service';
 import { NewPitch, Pitch, PitchEvaluation } from './model/pitch.schema';
+import { UpdatePitchFileNameInput } from './dto/update-pitchfilename.input';
 
 @ApiTags('pitch')
 @Controller('pitch')
@@ -470,5 +471,33 @@ export class PitchController {
     await this.authService.validateRecaptcha(getPichInput.recaptchaToken);
 
     return await this.pitchService.getPitchfromEmail(getPichInput.email);
+  }
+
+  @Post('/updatePitchFileName')
+  @ApiBody({
+    type: UpdatePitchFileNameInput,
+    description: 'Input your fileName',
+  })
+  @ApiOperation({
+    summary: 'Update the your fileName of your pitch',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Successful Updated',
+  })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  // this function uploads a file to the server and then calls the pitchService to evaluate it.
+  async UpdatePitchFileName(
+    @Body(new ValidateDtoPipe())
+    updateFileNamePichInput: UpdatePitchFileNameInput,
+  ) {
+    await this.authService.validateRecaptcha(
+      updateFileNamePichInput.recaptchaToken,
+    );
+
+    return await this.pitchService.updatePitchFileName(
+      updateFileNamePichInput._id,
+      updateFileNamePichInput.fileName,
+    );
   }
 }

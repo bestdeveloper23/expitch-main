@@ -81,14 +81,14 @@ export class LangchainService {
       temperature,
       max_tokens,
     };
-  
+
     let lastError;
     const maxRetries = 3;
-  
+
     for (let i = 0; i < maxRetries; i++) {
       try {
         const completion = await this.openAiApi.createChatCompletion(params);
-  
+
         if (completion.data.choices[0].message.function_call === undefined) {
           return {
             content: completion.data.choices[0].message.content,
@@ -96,28 +96,38 @@ export class LangchainService {
             key,
           };
         } else {
-          let jsonString = completion.data.choices[0].message.function_call.arguments;
-  
+          let jsonString =
+            completion.data.choices[0].message.function_call.arguments;
+
           // Attempt to remove a trailing comma from the JSON string
-          jsonString = jsonString.replace(/,\s*}$/, "}").replace(/\n/g, "").replace(/\r/g, "");
-  
+          jsonString = jsonString
+            .replace(/,\s*}$/, '}')
+            .replace(/\n/g, '')
+            .replace(/\r/g, '');
+
           // Attempt to parse the JSON string
           let functionCallResult;
           try {
             functionCallResult = JSON.parse(jsonString);
           } catch (error) {
-            console.error("Error parsing JSON:", error, "\nJSON String:", jsonString);
+            console.error(
+              'Error parsing JSON:',
+              error,
+              '\nJSON String:',
+              jsonString,
+            );
             throw error;
           }
-  
-          const functionCallName = completion.data.choices[0].message.function_call.name;
-  
+
+          const functionCallName =
+            completion.data.choices[0].message.function_call.name;
+
           usageArray.push({
             name: functionCallName,
             modelName,
             ...completion.data.usage,
           });
-  
+
           return {
             functionCallResult,
             functionCallName,
@@ -125,18 +135,18 @@ export class LangchainService {
             key,
           };
         }
-  
       } catch (error) {
         lastError = error;
         console.error(`Attempt ${i + 1} failed. Retrying...`);
-        await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000)); // Exponential backoff
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.pow(2, i) * 1000),
+        ); // Exponential backoff
       }
     }
-  
-    console.error("Max retries reached. Throwing last error.");
+
+    console.error('Max retries reached. Throwing last error.');
     throw lastError;
   }
-  
 
   async callGetLetterGrade(
     actualResult: any,
@@ -144,27 +154,33 @@ export class LangchainService {
     evaluationJson: any,
     tokenUsageArray: any,
     pitchText: string,
-
   ) {
     const key = actualResult.key;
 
     const letterGradePrompt = evaluationJson[key].LetterGrade;
     const promptMessage: ChatCompletionRequestMessage[] = [
       {
-          role: 'system',
-          content: 'Only use the functions you have been provided with and follow the format strictly.',
+        role: 'system',
+        content:
+          'Only use the functions you have been provided with and follow the format strictly.',
       },
       {
-          role: 'user',
-          content: 'Your job is to act as an early stage startup investor. You are supposed to listen to a startup pitch and analyze it and give it a letter grade based on instructions you will receive' 
-                   + 'Here is the startup pitch - ' + '\n' 
-                   + pitchText + '\n' 
-                   + 'Here is your verbal evaluation - ' + '\n' 
-                   + actualResult.functionCallResult.Evaluation 
-                   + '\n' + 'Your grading should be based on the following criteria:' 
-                   + '\n' + letterGradePrompt,
+        role: 'user',
+        content:
+          'Your job is to act as an early stage startup investor. You are supposed to listen to a startup pitch and analyze it and give it a letter grade based on instructions you will receive' +
+          'Here is the startup pitch - ' +
+          '\n' +
+          pitchText +
+          '\n' +
+          'Here is your verbal evaluation - ' +
+          '\n' +
+          actualResult.functionCallResult.Evaluation +
+          '\n' +
+          'Your grading should be based on the following criteria:' +
+          '\n' +
+          letterGradePrompt,
       },
-  ];
+    ];
 
     const functionSchema = [
       {
@@ -209,62 +225,69 @@ export class LangchainService {
     evaluationJson: any,
     tokenUsageArray: any,
     pitchText: string,
-) {
+  ) {
     const key = actualResult.key;
 
     // Extracting the recommendation prompt from your JSON, similar to how you've extracted the LetterGrade prompt
     const recommendationPrompt = evaluationJson[key].Recommendations;
-    
+
     // Constructing the message prompt
     const promptMessage: ChatCompletionRequestMessage[] = [
-        {
-            role: 'system',
-            content: 'Only use the functions you have been provided with and follow the format strictly.',
-        },
-        {
-            role: 'user',
-            content: 'Your job is to listen to a startup pitch and analyze it to provide recommendations based on instructions you will receive. Here is the startup pitch - ' 
-                     + '\n' + pitchText 
-                     + '\n' + 'Here is your verbal evaluation - ' 
-                     + '\n' + actualResult.functionCallResult.Evaluation  
-                     + '\n' + 'Your evaluation should be based on the following criteria' 
-                     + '\n' + recommendationPrompt
-                     ,
-        },
+      {
+        role: 'system',
+        content:
+          'Only use the functions you have been provided with and follow the format strictly.',
+      },
+      {
+        role: 'user',
+        content:
+          'Your job is to listen to a startup pitch and analyze it to provide recommendations based on instructions you will receive. Here is the startup pitch - ' +
+          '\n' +
+          pitchText +
+          '\n' +
+          'Here is your verbal evaluation - ' +
+          '\n' +
+          actualResult.functionCallResult.Evaluation +
+          '\n' +
+          'Your evaluation should be based on the following criteria' +
+          '\n' +
+          recommendationPrompt,
+      },
     ];
 
     // Defining the schema for this function
     const functionSchema = [
-        {
-            name: `${key}-recommendation`,
-            description: `Provide a recommendation based on the Evaluation.`,
-            parameters: {
-                type: 'object',
-                properties: {
-                    Recommendations: {
-                        type: 'string',
-                        description: recommendationPrompt,
-                    },
-                },
-                required: ['Recommendations'],
+      {
+        name: `${key}-recommendation`,
+        description: `Provide a recommendation based on the Evaluation.`,
+        parameters: {
+          type: 'object',
+          properties: {
+            Recommendations: {
+              type: 'string',
+              description: recommendationPrompt,
             },
+          },
+          required: ['Recommendations'],
         },
+      },
     ];
 
     // Making the API call, similar to the previous method
     return this.callOpenAI(
-        promptMessage,
-        functionSchema,
-        tokenUsageArray,
-        'gpt-3.5-turbo-16k-0613',
-        3000,
-        key,
-        0,
+      promptMessage,
+      functionSchema,
+      tokenUsageArray,
+      'gpt-3.5-turbo-16k-0613',
+      3000,
+      key,
+      0,
     ).then((result) => {
-        // Storing the recommendation in the final result object
-        finalResult[key].Recommendations = result.functionCallResult.Recommendations;
+      // Storing the recommendation in the final result object
+      finalResult[key].Recommendations =
+        result.functionCallResult.Recommendations;
     });
-}
+  }
   calculateCost(tokenUsageArray: any) {
     const prices = {
       'gpt-3.5-turbo': { prompt: 0.0015, completion: 0.002 },
@@ -335,24 +358,29 @@ export class LangchainService {
           properties: {
             ValidBoolean: {
               type: 'boolean',
-              description: 'For the following text, return True if it is describing a business or a startup idea, Return False if not',
+              description:
+                'For the following text, return True if it is describing a business or a startup idea, Return False if not',
             },
           },
           required: ['ValidBoolean'],
         },
       },
     ];
-    
+
     const message: ChatCompletionRequestMessage[] = [
       {
-          role: 'system',
-          content: 'Evaluate the following text and Return True if it contains information about a company, startup, or an idea. It should contain information such as a new solution for an existing market problem and a business model. Return False if the text is talking about anything else. Only use the functions you have been provided with and follow the format strictly.'
+        role: 'system',
+        content:
+          'Evaluate the following text and Return True if it contains information about a company, startup, or an idea. It should contain information such as a new solution for an existing market problem and a business model. Return False if the text is talking about anything else. Only use the functions you have been provided with and follow the format strictly.',
       },
       {
         role: 'user',
-        content: 'Evaluate the following text and Return True if it contains information about a company, startup, or an idea. It should contain information such as a new solution for an existing market problem and a business model. Return False if the text is talking about anything else. Return False if the text is just dummy text, or a copypaste repetition without real content, such as This is a pitch. Here is the text: ' + '\n' + pitchText 
-      }
-  ];
+        content:
+          'Evaluate the following text and Return True if it contains information about a company, startup, or an idea. It should contain information such as a new solution for an existing market problem and a business model. Return False if the text is talking about anything else. Return False if the text is just dummy text, or a copypaste repetition without real content, such as This is a pitch. Here is the text: ' +
+          '\n' +
+          pitchText,
+      },
+    ];
 
     const isInputAPitchCompletion = await this.callOpenAI(
       message,
@@ -363,7 +391,6 @@ export class LangchainService {
 
     if (!isInputAPitchCompletion.functionCallResult.ValidBoolean) {
       throw new BadRequestException(' Input is not a pitch...');
-
     }
 
     // return isInputAPitchCompletion;
@@ -379,13 +406,26 @@ export class LangchainService {
         maxTokens,
       } = value;
       const topic = textMapping[key];
-    
+
       // Evaluation prompt message
       const promptMessageEvaluation: ChatCompletionRequestMessage[] = [
-        { role: 'system', content: 'Only use the functions you have been provided with and follow the format strictly.' },
-        { role: 'user', content: 'Here is the startup pitch' + '\n' + pitchText  + '\n' + 'Your evaluation should be based on the following criteria' + '\n' + Evaluation},
+        {
+          role: 'system',
+          content:
+            'Only use the functions you have been provided with and follow the format strictly.',
+        },
+        {
+          role: 'user',
+          content:
+            'Here is the startup pitch' +
+            '\n' +
+            pitchText +
+            '\n' +
+            'Your evaluation should be based on the following criteria' +
+            '\n' +
+            Evaluation,
+        },
       ];
-
 
       const functionSchemaEvaluation = [
         {
@@ -403,18 +443,18 @@ export class LangchainService {
           },
         },
       ];
-    
+
       // Call OpenAI separately for Evaluation and Recommendations
       const functionChatCompletionEvaluation = this.callOpenAI(
         promptMessageEvaluation,
-        functionSchemaEvaluation,  // Assuming the schema stays the same for both calls; modify if needed
+        functionSchemaEvaluation, // Assuming the schema stays the same for both calls; modify if needed
         tokenUsageArray,
         'gpt-3.5-turbo-16k-0613',
         maxTokens,
         key, // Append "-evaluation" to key to distinguish in results
         temperature,
       );
-    
+
       // Push both promises to the `chains` array
       chains.push(functionChatCompletionEvaluation);
     }
